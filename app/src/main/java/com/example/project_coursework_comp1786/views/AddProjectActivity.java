@@ -3,15 +3,18 @@ package com.example.project_coursework_comp1786.views;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project_coursework_comp1786.R;
 import com.example.project_coursework_comp1786.models.Project;
 import com.example.project_coursework_comp1786.viewmodels.AddProjectViewModel;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -33,6 +36,12 @@ public class AddProjectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_project);
 
+        MaterialToolbar toolbar = findViewById(R.id.toolbarAdd);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
         viewModel = new ViewModelProvider(this).get(AddProjectViewModel.class);
 
         initViews();
@@ -40,6 +49,15 @@ public class AddProjectActivity extends AppCompatActivity {
         setupDatePickers();
 
         btnReview.setOnClickListener(v -> reviewDataBeforeSave());
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void initViews() {
@@ -98,7 +116,6 @@ public class AddProjectActivity extends AppCompatActivity {
         String status = actvStatus.getText().toString().trim();
         String difficulty = actvDifficulty.getText().toString().trim();
 
-        // Validate
         Map<String, String> errors = viewModel.validateProject(code, name, desc, manager, budgetStr, startDate, endDate, status, difficulty);
 
         layoutCode.setError(errors.get("code"));

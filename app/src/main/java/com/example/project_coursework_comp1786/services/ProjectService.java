@@ -73,4 +73,10 @@ public class ProjectService {
         cursor.close();
         return projectList;
     }
+
+    public boolean deleteProject(long id) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        int rowsDeleted = db.delete(DatabaseHelper.TABLE_PROJECTS, "id=?", new String[]{String.valueOf(id)});
+        return rowsDeleted > 0;
+    }
 }

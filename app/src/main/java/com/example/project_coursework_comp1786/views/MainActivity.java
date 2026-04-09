@@ -48,7 +48,9 @@ public class MainActivity extends AppCompatActivity {
         rvProjects.setLayoutManager(new LinearLayoutManager(this));
 
         projectAdapter = new ProjectAdapter(projectList, project -> {
-            Toast.makeText(this, "Opening details for: " + project.getName(), Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MainActivity.this, ProjectDetailActivity.class);
+            intent.putExtra("PROJECT_DATA", project);
+            startActivity(intent);
         });
         rvProjects.setAdapter(projectAdapter);
 
