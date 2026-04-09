@@ -18,15 +18,14 @@ public class AddProjectViewModel extends AndroidViewModel {
         projectService = new ProjectService(application);
     }
 
-    // Trả về một danh sách các lỗi. Nếu Map rỗng nghĩa là hợp lệ.
     public Map<String, String> validateProject(String code, String name, String desc, String manager,
                                                String budgetStr, String startDate, String endDate,
-                                               String status, String difficulty) {
+                                               String status, String difficulty, long currentProjectId) {
 
         Map<String, String> errors = new HashMap<>();
 
         if (code.isEmpty()) errors.put("code", "Project Code is required");
-        else if (projectService.isProjectCodeExists(code)) errors.put("code", "Code already exists");
+        else if (projectService.isProjectCodeExists(code, currentProjectId)) errors.put("code", "Code already exists");
 
         if (name.isEmpty()) errors.put("name", "Project Name is required");
         if (desc.isEmpty()) errors.put("desc", "Description is required");

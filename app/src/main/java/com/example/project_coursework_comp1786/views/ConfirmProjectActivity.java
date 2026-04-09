@@ -36,16 +36,25 @@ public class ConfirmProjectActivity extends AppCompatActivity {
         btnEdit.setOnClickListener(v -> finish());
 
         btnConfirm.setOnClickListener(v -> {
-            long id = projectService.insertProject(projectData);
-            if (id != -1) {
-                Toast.makeText(this, "Project Saved Successfully!", Toast.LENGTH_SHORT).show();
+            boolean success = false;
 
+            if (projectData.getId() > 0) {
+                success = projectService.updateProject(projectData);
+                if (success) Toast.makeText(this, "Project Updated Successfully!", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                long newId = projectService.insertProject(projectData);
+                success = (newId != -1);
+                if (success) Toast.makeText(this, "Project Saved Successfully!", Toast.LENGTH_SHORT).show();
+            }
+
+            if (success) {
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
                 finish();
             } else {
-                Toast.makeText(this, "Error saving project to Database", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Database Error", Toast.LENGTH_SHORT).show();
             }
         });
     }

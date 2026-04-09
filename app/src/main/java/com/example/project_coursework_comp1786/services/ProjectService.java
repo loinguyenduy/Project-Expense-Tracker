@@ -36,9 +36,15 @@ public class ProjectService {
         return db.insert(DatabaseHelper.TABLE_PROJECTS, null, values);
     }
 
-    public boolean isProjectCodeExists(String projectCode) {
+    public boolean isProjectCodeExists(String projectCode, long excludeId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_PROJECTS + " WHERE projectCode = ?", new String[]{projectCode});
+        Cursor cursor;
+
+        if (excludeId == -1) {
+            cursor = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_PROJECTS + " WHERE projectCode = ?", new String[]{projectCode});
+        } else {
+            cursor = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_PROJECTS + " WHERE projectCode = ? AND id != ?", new String[]{projectCode, String.valueOf(excludeId)});
+        }
         boolean exists = (cursor.getCount() > 0);
         cursor.close();
         return exists;
@@ -78,5 +84,27 @@ public class ProjectService {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         int rowsDeleted = db.delete(DatabaseHelper.TABLE_PROJECTS, "id=?", new String[]{String.valueOf(id)});
         return rowsDeleted > 0;
+    }
+
+    public boolean updateProject(Project project) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put("projectCode", project.getProjectCode());
+        values.put("name", project.getName());
+        values.put("description", project.getDescription());
+        values.put("startDate", project.getStartDate());
+        values.put("endDate", project.getEndDate());
+        values.put("manager", project.getManager());
+        values.put("status", project.getStatus());
+        values.put("budget", project.getBudget());
+        values.put("specialRequirements", project.getSpecialRequirements());
+        values.put("clientInfo", project.getClientInfo());
+        values.put("jobDifficulty", project.getJobDifficulty());
+
+        values.put("isSynced", 0);
+
+        int rowsAffected = db.update(DatabaseHelper.TABLE_PROJECTS, values, "id=?", new String[]{String.valueOf(project.getId())});
+        return rowsAffected > 0;
     }
 }

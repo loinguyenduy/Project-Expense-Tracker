@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="16dp"
+    android:background="@color/white"
+    android:gravity="center_vertical">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginEnd="16dp">
+
+        <TextView
+            android:id="@+id/tvExpTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Materials"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/tvExpSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Oct 24, 2023 • Claimant: John"
+            android:textSize="12sp"
+            android:textColor="#757575"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end">
+
+        <TextView
+            android:id="@+id/tvExpAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="$12,450.00"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/md_theme_primary"/>
+
+        <TextView
+            android:id="@+id/tvExpStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PAID"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:textColor="#00C853"
+            android:background="#E8F5E9"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+</LinearLayout>

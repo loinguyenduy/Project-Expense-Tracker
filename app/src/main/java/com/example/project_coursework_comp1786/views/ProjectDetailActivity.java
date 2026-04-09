@@ -1,31 +1,51 @@
 package com.example.project_coursework_comp1786.views;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.project_coursework_comp1786.R;
+import com.example.project_coursework_comp1786.adapters.ExpenseAdapter;
+import com.example.project_coursework_comp1786.models.Expense;
 import com.example.project_coursework_comp1786.models.Project;
+import com.example.project_coursework_comp1786.services.ExpenseService;
 import com.example.project_coursework_comp1786.services.ProjectService;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProjectDetailActivity extends AppCompatActivity {
 
     private Project currentProject;
     private ProjectService projectService;
+    private ExpenseService expenseService;
+    private ExpenseAdapter expenseAdapter;
+    private RecyclerView rvExpenses;
+    private TextView tvEmptyExpense;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_project_detail);
+
+        initViews();
+
+        projectService = new ProjectService(this);
+        expenseService = new ExpenseService(this);
 
         MaterialToolbar toolbar = findViewById(R.id.toolbarDetail);
         setSupportActionBar(toolbar);
@@ -33,8 +53,6 @@ public class ProjectDetailActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("");
         }
-
-        projectService = new ProjectService(this);
 
         currentProject = (Project) getIntent().getSerializableExtra("PROJECT_DATA");
 
@@ -46,12 +64,56 @@ public class ProjectDetailActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Error loading project", Toast.LENGTH_SHORT).show();
             finish();
+            return;
         }
+
+        setupRecyclerView();
 
         MaterialButton btnAddExpense = findViewById(R.id.btnAddExpense);
         btnAddExpense.setOnClickListener(v -> {
-            Toast.makeText(this, "Add Expense feature coming soon!", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, AddExpenseActivity.class);
+            intent.putExtra("PROJECT_ID", currentProject.getId());
+            startActivity(intent);
         });
+    }
+
+    private void initViews() {
+        rvExpenses = findViewById(R.id.rvExpenses);
+        tvEmptyExpense = findViewById(R.id.tvEmptyExpense);
+    }
+
+    private void setupRecyclerView() {
+        rvExpenses.setLayoutManager(new LinearLayoutManager(this));
+
+        expenseAdapter = new ExpenseAdapter(new ArrayList<>(), expense -> {
+            Intent intent = new Intent(ProjectDetailActivity.this, AddExpenseActivity.class);
+            intent.putExtra("PROJECT_ID", currentProject.getId());
+            intent.putExtra("EXPENSE_DATA_TO_EDIT", expense);
+            startActivity(intent);
+        });
+
+        rvExpenses.setAdapter(expenseAdapter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (currentProject != null) {
+            loadExpenses();
+        }
+    }
+
+    private void loadExpenses() {
+        List<Expense> expenses = expenseService.getExpensesByProjectId(currentProject.getId());
+        expenseAdapter.setExpenses(expenses);
+
+        if (expenses.isEmpty()) {
+            tvEmptyExpense.setVisibility(View.VISIBLE);
+            rvExpenses.setVisibility(View.GONE);
+        } else {
+            tvEmptyExpense.setVisibility(View.GONE);
+            rvExpenses.setVisibility(View.VISIBLE);
+        }
     }
 
     private void displayProjectData() {
@@ -97,7 +159,9 @@ public class ProjectDetailActivity extends AppCompatActivity {
             return true;
         }
         else if (id == R.id.action_edit) {
-            Toast.makeText(this, "Edit function coming next!", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, AddProjectActivity.class);
+            intent.putExtra("PROJECT_DATA_TO_EDIT", currentProject);
+            startActivity(intent);
             return true;
         }
 

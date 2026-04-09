@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.nav_projects) {
                 return true;
-            } else if (id == R.id.nav_expenses) {
+            } else if (id == R.id.nav_projects) {
                 Toast.makeText(this, "Expenses Feature Coming Soon", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (id == R.id.nav_settings) {

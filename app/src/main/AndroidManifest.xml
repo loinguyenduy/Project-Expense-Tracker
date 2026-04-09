@@ -23,6 +23,7 @@
         <activity android:name=".views.AddProjectActivity"/>
         <activity android:name=".views.ConfirmProjectActivity"/>
         <activity android:name=".views.ProjectDetailActivity" />
+        <activity android:name=".views.AddExpenseActivity" />
     </application>
 
 </manifest>

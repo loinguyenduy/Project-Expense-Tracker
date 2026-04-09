@@ -6,12 +6,19 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "ArchitectLedger.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 3;
 
     public static final String TABLE_PROJECTS = "projects";
+    public static final String TABLE_EXPENSES = "expenses";
 
     public DatabaseHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        super.onConfigure(db);
+        db.setForeignKeyConstraintsEnabled(true);
     }
 
     @Override
@@ -31,6 +38,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + "jobDifficulty TEXT,"
                 + "isSynced INTEGER DEFAULT 0)";
         db.execSQL(CREATE_PROJECTS_TABLE);
+
+        String CREATE_EXPENSES_TABLE = "CREATE TABLE " + TABLE_EXPENSES + "("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "projectId INTEGER,"
+                + "date TEXT,"
+                + "amount REAL,"
+                + "currency TEXT,"
+                + "type TEXT,"
+                + "paymentMethod TEXT,"
+                + "claimant TEXT,"
+                + "status TEXT,"
+                + "description TEXT,"
+                + "location TEXT,"
+                + "isSynced INTEGER DEFAULT 0,"
+                + "FOREIGN KEY(projectId) REFERENCES " + TABLE_PROJECTS + "(id) ON DELETE CASCADE)";
+        db.execSQL(CREATE_EXPENSES_TABLE);
     }
 
     @Override

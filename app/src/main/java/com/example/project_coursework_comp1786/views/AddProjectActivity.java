@@ -30,6 +30,7 @@ public class AddProjectActivity extends AppCompatActivity {
     private MaterialButton btnReview;
 
     private AddProjectViewModel viewModel;
+    private Project projectToEdit = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +48,11 @@ public class AddProjectActivity extends AppCompatActivity {
         initViews();
         setupDropdowns();
         setupDatePickers();
+
+        projectToEdit = (Project) getIntent().getSerializableExtra("PROJECT_DATA_TO_EDIT");
+        if (projectToEdit != null) {
+            populateDataForEdit();
+        }
 
         btnReview.setOnClickListener(v -> reviewDataBeforeSave());
     }
@@ -105,6 +111,23 @@ public class AddProjectActivity extends AppCompatActivity {
         }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show();
     }
 
+    private void populateDataForEdit() {
+        if (getSupportActionBar() != null) getSupportActionBar().setTitle("Edit Project");
+        btnReview.setText("Review Updates");
+
+        edtCode.setText(projectToEdit.getProjectCode());
+        edtName.setText(projectToEdit.getName());
+        edtDesc.setText(projectToEdit.getDescription());
+        edtManager.setText(projectToEdit.getManager());
+        edtBudget.setText(String.valueOf(projectToEdit.getBudget()));
+        edtStartDate.setText(projectToEdit.getStartDate());
+        edtEndDate.setText(projectToEdit.getEndDate());
+        actvStatus.setText(projectToEdit.getStatus(), false);
+        actvDifficulty.setText(projectToEdit.getJobDifficulty(), false);
+        edtSpecialReq.setText(projectToEdit.getSpecialRequirements());
+        edtClient.setText(projectToEdit.getClientInfo());
+    }
+
     private void reviewDataBeforeSave() {
         String code = edtCode.getText().toString().trim();
         String name = edtName.getText().toString().trim();
@@ -116,7 +139,9 @@ public class AddProjectActivity extends AppCompatActivity {
         String status = actvStatus.getText().toString().trim();
         String difficulty = actvDifficulty.getText().toString().trim();
 
-        Map<String, String> errors = viewModel.validateProject(code, name, desc, manager, budgetStr, startDate, endDate, status, difficulty);
+        long currentId = (projectToEdit != null) ? projectToEdit.getId() : -1;
+
+        Map<String, String> errors = viewModel.validateProject(code, name, desc, manager, budgetStr, startDate, endDate, status, difficulty, currentId);
 
         layoutCode.setError(errors.get("code"));
         layoutName.setError(errors.get("name"));
@@ -134,6 +159,10 @@ public class AddProjectActivity extends AppCompatActivity {
             String client = edtClient.getText().toString().trim();
 
             Project projectToReview = new Project(code, name, desc, startDate, endDate, manager, status, budget, specialReq, client, difficulty, 0);
+
+            if (projectToEdit != null) {
+                projectToReview.setId(projectToEdit.getId());
+            }
 
             Intent intent = new Intent(this, ConfirmProjectActivity.class);
             intent.putExtra("PROJECT_DATA", projectToReview);
