@@ -57,18 +57,44 @@ public class ProjectService {
     }
 
     public List<Project> getAllProjects() {
-        return searchProjects("");
+        return searchAndFilterProjects("", "", "", "All", "");
     }
 
-    public List<Project> searchProjects(String query) {
+    public List<Project> searchAndFilterProjects(String query, String startDate, String endDate, String status, String manager) {
         List<Project> list = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-        String sql = "SELECT * FROM " + DatabaseHelper.TABLE_PROJECTS +
-                " WHERE name LIKE ? OR description LIKE ? OR manager LIKE ? ORDER BY id DESC";
-        String wildCardQuery = "%" + query + "%";
+        StringBuilder sql = new StringBuilder("SELECT * FROM " + DatabaseHelper.TABLE_PROJECTS + " WHERE 1=1");
+        List<String> args = new ArrayList<>();
 
-        Cursor cursor = db.rawQuery(sql, new String[]{wildCardQuery, wildCardQuery, wildCardQuery});
+        if (query != null && !query.trim().isEmpty()) {
+            sql.append(" AND (name LIKE ? OR description LIKE ? OR projectCode LIKE ?)");
+            String wildCard = "%" + query.trim() + "%";
+            args.add(wildCard); args.add(wildCard); args.add(wildCard);
+        }
+
+        if (startDate != null && !startDate.isEmpty()) {
+            sql.append(" AND startDate >= ?");
+            args.add(startDate);
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            sql.append(" AND endDate <= ?");
+            args.add(endDate);
+        }
+
+        if (status != null && !status.isEmpty() && !status.equals("All")) {
+            sql.append(" AND status = ?");
+            args.add(status);
+        }
+
+        if (manager != null && !manager.trim().isEmpty()) {
+            sql.append(" AND manager LIKE ?");
+            args.add("%" + manager.trim() + "%");
+        }
+
+        sql.append(" ORDER BY id DESC");
+
+        Cursor cursor = db.rawQuery(sql.toString(), args.toArray(new String[0]));
 
         if (cursor.moveToFirst()) {
             do {
