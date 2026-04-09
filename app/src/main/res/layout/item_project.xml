@@ -45,12 +45,13 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/tvItemCode"
+            android:id="@+id/tvItemCodeManager"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="ARC-24-001"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp"/>
+            android:text="ARC-24-001 • Manager: John Doe"
+            android:textSize="13sp"
+            android:textColor="#757575"
+            android:layout_marginTop="6dp"/>
 
         <View
             android:layout_width="match_parent"
@@ -67,25 +68,26 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Budget:"
-                android:textSize="14sp"/>
+                android:text="Current Budget:"
+                android:textColor="#757575"
+                android:textSize="13sp"/>
 
             <TextView
                 android:id="@+id/tvItemBudget"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="$150,000"
+                android:text="$150,000.00"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/md_theme_primary"
                 android:layout_marginStart="8dp"
                 android:textSize="16sp"/>
 
             <ImageView
                 android:id="@+id/imgSyncStatus"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@android:drawable/ic_popup_sync"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@android:drawable/stat_notify_sync"
                 app:tint="#9E9E9E"/>
         </LinearLayout>
 

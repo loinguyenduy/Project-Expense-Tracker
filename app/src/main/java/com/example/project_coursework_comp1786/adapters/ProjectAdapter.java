@@ -52,13 +52,13 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     }
 
     static class ProjectViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvCode, tvStatus, tvBudget;
+        TextView tvName, tvCodeManager, tvStatus, tvBudget;
         ImageView imgSyncStatus;
 
         public ProjectViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvItemName);
-            tvCode = itemView.findViewById(R.id.tvItemCode);
+            tvCodeManager = itemView.findViewById(R.id.tvItemCodeManager);
             tvStatus = itemView.findViewById(R.id.tvItemStatus);
             tvBudget = itemView.findViewById(R.id.tvItemBudget);
             imgSyncStatus = itemView.findViewById(R.id.imgSyncStatus);
@@ -66,9 +66,12 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
 
         public void bind(final Project project, final OnItemClickListener listener) {
             tvName.setText(project.getName());
-            tvCode.setText(project.getProjectCode());
+
+            String codeAndManager = project.getProjectCode() + " • Manager: " + project.getManager();
+            tvCodeManager.setText(codeAndManager);
+
             tvStatus.setText(project.getStatus());
-            tvBudget.setText(String.format("$%.2f", project.getBudget()));
+            tvBudget.setText(String.format("$%,.2f", project.getBudget()));
 
             if (project.getIsSynced() == 1) {
                 imgSyncStatus.setColorFilter(itemView.getContext().getColor(android.R.color.holo_green_dark));
@@ -77,9 +80,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
             }
 
             itemView.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onItemClick(project);
-                }
+                if (listener != null) listener.onItemClick(project);
             });
         }
     }

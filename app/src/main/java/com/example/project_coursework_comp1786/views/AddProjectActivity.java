@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -15,11 +14,14 @@ import com.example.project_coursework_comp1786.models.Project;
 import com.example.project_coursework_comp1786.viewmodels.AddProjectViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Calendar;
+import java.util.Map;
 
 public class AddProjectActivity extends AppCompatActivity {
 
+    private TextInputLayout layoutCode, layoutName, layoutDesc, layoutManager, layoutBudget, layoutStartDate, layoutEndDate, layoutStatus, layoutDifficulty;
     private TextInputEditText edtCode, edtName, edtDesc, edtManager, edtBudget, edtStartDate, edtEndDate, edtSpecialReq, edtClient;
     private AutoCompleteTextView actvStatus, actvDifficulty;
     private MaterialButton btnReview;
@@ -41,6 +43,16 @@ public class AddProjectActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        layoutCode = findViewById(R.id.layoutCode);
+        layoutName = findViewById(R.id.layoutName);
+        layoutDesc = findViewById(R.id.layoutDesc);
+        layoutManager = findViewById(R.id.layoutManager);
+        layoutBudget = findViewById(R.id.layoutBudget);
+        layoutStartDate = findViewById(R.id.layoutStartDate);
+        layoutEndDate = findViewById(R.id.layoutEndDate);
+        layoutStatus = findViewById(R.id.layoutStatus);
+        layoutDifficulty = findViewById(R.id.layoutDifficulty);
+
         edtCode = findViewById(R.id.edtCode);
         edtName = findViewById(R.id.edtName);
         edtDesc = findViewById(R.id.edtDesc);
@@ -57,12 +69,10 @@ public class AddProjectActivity extends AppCompatActivity {
 
     private void setupDropdowns() {
         String[] statuses = {"Active", "On Hold", "Completed"};
-        ArrayAdapter<String> statusAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, statuses);
-        actvStatus.setAdapter(statusAdapter);
+        actvStatus.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, statuses));
 
         String[] difficulties = {"Easy", "Medium", "Hard", "Critical"};
-        ArrayAdapter<String> diffAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, difficulties);
-        actvDifficulty.setAdapter(diffAdapter);
+        actvDifficulty.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, difficulties));
     }
 
     private void setupDatePickers() {
@@ -70,12 +80,11 @@ public class AddProjectActivity extends AppCompatActivity {
         edtEndDate.setOnClickListener(v -> showDatePicker(edtEndDate));
     }
 
-    private void showDatePicker(TextInputEditText targetEditText) {
-        Calendar calendar = Calendar.getInstance();
-        new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-            String date = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth);
-            targetEditText.setText(date);
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+    private void showDatePicker(TextInputEditText target) {
+        Calendar c = Calendar.getInstance();
+        new DatePickerDialog(this, (view, year, month, day) -> {
+            target.setText(String.format("%04d-%02d-%02d", year, month + 1, day));
+        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show();
     }
 
     private void reviewDataBeforeSave() {
@@ -89,20 +98,29 @@ public class AddProjectActivity extends AppCompatActivity {
         String status = actvStatus.getText().toString().trim();
         String difficulty = actvDifficulty.getText().toString().trim();
 
-        String specialReq = edtSpecialReq.getText().toString().trim();
-        String client = edtClient.getText().toString().trim();
+        // Validate
+        Map<String, String> errors = viewModel.validateProject(code, name, desc, manager, budgetStr, startDate, endDate, status, difficulty);
 
-        String result = viewModel.validateProject(code, name, desc, manager, budgetStr, startDate, endDate, status, difficulty);
+        layoutCode.setError(errors.get("code"));
+        layoutName.setError(errors.get("name"));
+        layoutDesc.setError(errors.get("desc"));
+        layoutManager.setError(errors.get("manager"));
+        layoutBudget.setError(errors.get("budget"));
+        layoutStartDate.setError(errors.get("startDate"));
+        layoutEndDate.setError(errors.get("endDate"));
+        layoutStatus.setError(errors.get("status"));
+        layoutDifficulty.setError(errors.get("difficulty"));
 
-        if (result.equals("VALID")) {
+        if (errors.isEmpty()) {
             double budget = Double.parseDouble(budgetStr);
+            String specialReq = edtSpecialReq.getText().toString().trim();
+            String client = edtClient.getText().toString().trim();
+
             Project projectToReview = new Project(code, name, desc, startDate, endDate, manager, status, budget, specialReq, client, difficulty, 0);
 
             Intent intent = new Intent(this, ConfirmProjectActivity.class);
             intent.putExtra("PROJECT_DATA", projectToReview);
             startActivity(intent);
-        } else {
-            Toast.makeText(this, result, Toast.LENGTH_LONG).show();
         }
     }
 }

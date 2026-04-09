@@ -7,6 +7,9 @@ import androidx.lifecycle.AndroidViewModel;
 
 import com.example.project_coursework_comp1786.services.ProjectService;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class AddProjectViewModel extends AndroidViewModel {
     private ProjectService projectService;
 
@@ -15,36 +18,39 @@ public class AddProjectViewModel extends AndroidViewModel {
         projectService = new ProjectService(application);
     }
 
-    public String validateProject(String code, String name, String desc, String manager,
-                                  String budgetStr, String startDate, String endDate,
-                                  String status, String difficulty) {
+    // Trả về một danh sách các lỗi. Nếu Map rỗng nghĩa là hợp lệ.
+    public Map<String, String> validateProject(String code, String name, String desc, String manager,
+                                               String budgetStr, String startDate, String endDate,
+                                               String status, String difficulty) {
 
-        if (code.isEmpty()) return "Project Code is required.";
-        if (name.isEmpty()) return "Project Name is required.";
-        if (desc.isEmpty()) return "Project Description is required.";
-        if (manager.isEmpty()) return "Manager is required.";
-        if (budgetStr.isEmpty()) return "Budget is required.";
-        if (startDate.isEmpty()) return "Start Date is required.";
-        if (endDate.isEmpty()) return "End Date is required.";
-        if (status.isEmpty()) return "Status is required.";
-        if (difficulty.isEmpty()) return "Difficulty is required.";
+        Map<String, String> errors = new HashMap<>();
 
-        double budget;
-        try {
-            budget = Double.parseDouble(budgetStr);
-            if (budget <= 0) return "Budget must be greater than 0.";
-        } catch (NumberFormatException e) {
-            return "Invalid budget format.";
+        if (code.isEmpty()) errors.put("code", "Project Code is required");
+        else if (projectService.isProjectCodeExists(code)) errors.put("code", "Code already exists");
+
+        if (name.isEmpty()) errors.put("name", "Project Name is required");
+        if (desc.isEmpty()) errors.put("desc", "Description is required");
+        if (manager.isEmpty()) errors.put("manager", "Manager is required");
+        if (startDate.isEmpty()) errors.put("startDate", "Start Date is required");
+        if (endDate.isEmpty()) errors.put("endDate", "End Date is required");
+        if (status.isEmpty()) errors.put("status", "Status is required");
+        if (difficulty.isEmpty()) errors.put("difficulty", "Difficulty is required");
+
+        if (budgetStr.isEmpty()) {
+            errors.put("budget", "Budget is required");
+        } else {
+            try {
+                double budget = Double.parseDouble(budgetStr);
+                if (budget <= 0) errors.put("budget", "Must be > 0");
+            } catch (NumberFormatException e) {
+                errors.put("budget", "Invalid format");
+            }
         }
 
-        if (startDate.compareTo(endDate) > 0) {
-            return "End date cannot be before Start date.";
+        if (!startDate.isEmpty() && !endDate.isEmpty() && startDate.compareTo(endDate) > 0) {
+            errors.put("endDate", "End date must be after start date");
         }
 
-        if (projectService.isProjectCodeExists(code)) {
-            return "This Project Code already exists. Please use a unique code.";
-        }
-
-        return "VALID";
+        return errors;
     }
 }
