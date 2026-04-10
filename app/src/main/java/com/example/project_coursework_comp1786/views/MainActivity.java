@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.project_coursework_comp1786.R;
 import com.example.project_coursework_comp1786.adapters.ProjectAdapter;
 import com.example.project_coursework_comp1786.models.Project;
+import com.example.project_coursework_comp1786.services.FirebaseSyncService;
 import com.example.project_coursework_comp1786.services.ProjectService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
@@ -35,12 +36,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvEmptyState, tvTotalBudget;
     private EditText edtSearch;
     private TextInputLayout searchInputLayout;
+    private BottomNavigationView bottomNavigation;
 
     private ProjectAdapter projectAdapter;
     private ProjectService projectService;
     private List<Project> projectList;
 
-    // Biến lưu trữ trạng thái Lọc (Filter)
     private String filterStart = "";
     private String filterEnd = "";
     private String filterStatus = "All";
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         tvEmptyState = findViewById(R.id.tvEmptyState);
         tvTotalBudget = findViewById(R.id.tvTotalBudget);
         edtSearch = findViewById(R.id.edtSearch);
+        bottomNavigation = findViewById(R.id.bottomNavigation);
 
         searchInputLayout = (TextInputLayout) edtSearch.getParent().getParent();
 
@@ -83,6 +85,18 @@ public class MainActivity extends AppCompatActivity {
         });
 
         searchInputLayout.setEndIconOnClickListener(v -> showAdvancedFilterDialog());
+
+        bottomNavigation.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_projects) {
+                return true;
+            } else if (id == R.id.nav_settings) {
+                FirebaseSyncService syncService = new FirebaseSyncService(MainActivity.this);
+                syncService.syncUnsyncedData();
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "100705275339",
+    "project_id": "manage-expense-comp1786",
+    "storage_bucket": "manage-expense-comp1786.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100705275339:android:44876849ed49c10225ba4e",
+        "android_client_info": {
+          "package_name": "com.example.project_coursework_comp1786"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDDE57nq5X-Hds8gx8Ild_8Tg6ug0SEbE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
