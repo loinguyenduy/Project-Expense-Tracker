@@ -1,7 +1,12 @@
 package com.example.project_coursework_comp1786.views;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -9,21 +14,29 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project_coursework_comp1786.R;
 import com.example.project_coursework_comp1786.models.Expense;
 import com.example.project_coursework_comp1786.services.ExpenseService;
 import com.example.project_coursework_comp1786.viewmodels.AddExpenseViewModel;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class AddExpenseActivity extends AppCompatActivity {
@@ -33,10 +46,25 @@ public class AddExpenseActivity extends AppCompatActivity {
     private ExpenseService expenseService;
     private AddExpenseViewModel viewModel;
 
-    private TextInputLayout layoutDate, layoutAmount, layoutCurrency, layoutType, layoutMethod, layoutClaimant, layoutStatus;
+    // Khai báo biến Location
+    private FusedLocationProviderClient fusedLocationClient;
+
+    private TextInputLayout layoutDate, layoutAmount, layoutCurrency, layoutType, layoutMethod, layoutClaimant, layoutStatus, layoutLocation;
     private TextInputEditText edtDate, edtAmount, edtClaimant, edtDesc, edtLocation;
     private AutoCompleteTextView actvCurrency, actvType, actvMethod, actvStatus;
     private MaterialButton btnSave;
+
+    // Bộ xử lý xin quyền Location kiểu mới của Android
+    private final ActivityResultLauncher<String[]> locationPermissionRequest =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                Boolean fineLocationGranted = result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false);
+                Boolean coarseLocationGranted = result.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false);
+                if ((fineLocationGranted != null && fineLocationGranted) || (coarseLocationGranted != null && coarseLocationGranted)) {
+                    fetchLocation(); // Đã có quyền -> Lấy vị trí
+                } else {
+                    Toast.makeText(this, "Permission Denied! Cannot detect location.", Toast.LENGTH_SHORT).show();
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +88,7 @@ public class AddExpenseActivity extends AppCompatActivity {
 
         expenseService = new ExpenseService(this);
         viewModel = new ViewModelProvider(this).get(AddExpenseViewModel.class);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         initViews();
         setupDropdowns();
@@ -67,8 +96,12 @@ public class AddExpenseActivity extends AppCompatActivity {
         if (expenseToEdit != null) {
             populateDataForEdit();
         }
+
         edtDate.setOnClickListener(v -> showDatePicker());
         btnSave.setOnClickListener(v -> saveExpenseData());
+
+        // Lắng nghe sự kiện bấm vào Icon Location
+        layoutLocation.setEndIconOnClickListener(v -> checkLocationPermissionAndFetch());
     }
 
     private void initViews() {
@@ -79,6 +112,7 @@ public class AddExpenseActivity extends AppCompatActivity {
         layoutMethod = findViewById(R.id.layoutMethod);
         layoutClaimant = findViewById(R.id.layoutClaimant);
         layoutStatus = findViewById(R.id.layoutStatus);
+        layoutLocation = findViewById(R.id.layoutLocation); // Ánh xạ layout location
 
         edtDate = findViewById(R.id.edtDate);
         edtAmount = findViewById(R.id.edtAmount);
@@ -92,6 +126,46 @@ public class AddExpenseActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSaveExpense);
     }
 
+    // Kiểm tra quyền trước khi lấy GPS
+    private void checkLocationPermissionAndFetch() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fetchLocation();
+        } else {
+            locationPermissionRequest.launch(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            });
+        }
+    }
+
+    // Hàm lấy tọa độ và dịch ra địa chỉ thực tế
+    @SuppressLint("MissingPermission")
+    private void fetchLocation() {
+        Toast.makeText(this, "Detecting location...", Toast.LENGTH_SHORT).show();
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null) {
+                try {
+                    // Sử dụng Geocoder để chuyển tọa độ thành tên đường
+                    Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                    List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+
+                    if (addresses != null && !addresses.isEmpty()) {
+                        String address = addresses.get(0).getAddressLine(0);
+                        edtLocation.setText(address); // Điền địa chỉ đẹp vào ô
+                    } else {
+                        // Nếu mạng yếu không dịch được, điền thẳng tọa độ
+                        edtLocation.setText("Lat: " + location.getLatitude() + ", Lng: " + location.getLongitude());
+                    }
+                } catch (IOException e) {
+                    edtLocation.setText("Lat: " + location.getLatitude() + ", Lng: " + location.getLongitude());
+                }
+            } else {
+                Toast.makeText(this, "Could not get location. Turn on GPS in Settings.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // ... (Giữ nguyên các hàm setupDropdowns, populateDataForEdit, showDatePicker, saveExpenseData, onCreateOptionsMenu, onOptionsItemSelected, showDeleteConfirmDialog như cũ)
     private void setupDropdowns() {
         String[] currencies = {"USD", "EUR", "GBP", "VND", "CAD", "AUD", "JPY"};
         actvCurrency.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, currencies));

@@ -150,15 +150,20 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutLocation"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp">
+                android:layout_marginBottom="32dp"
+                app:endIconMode="custom"
+                app:endIconDrawable="@android:drawable/ic_menu_mylocation"
+                app:endIconContentDescription="Detect Location">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edtLocation"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Location (Optional)" />
+                    android:hint="Location (Optional, Tap icon to auto-detect ->)" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
