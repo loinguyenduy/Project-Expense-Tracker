@@ -12,7 +12,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,6 +23,7 @@ import com.example.project_coursework_comp1786.services.ExpenseService;
 import com.example.project_coursework_comp1786.services.ProjectService;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +34,14 @@ public class ProjectDetailActivity extends AppCompatActivity {
     private ProjectService projectService;
     private ExpenseService expenseService;
     private ExpenseAdapter expenseAdapter;
+
+    // Giao diện cũ
     private RecyclerView rvExpenses;
     private TextView tvEmptyExpense;
+
+    // Giao diện Dashboard mới
+    private TextView tvRemainingBudget, tvUtilizedPercent, tvTotalSpent, tvDashboardBudget;
+    private LinearProgressIndicator progressBudget;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +86,13 @@ public class ProjectDetailActivity extends AppCompatActivity {
     private void initViews() {
         rvExpenses = findViewById(R.id.rvExpenses);
         tvEmptyExpense = findViewById(R.id.tvEmptyExpense);
+
+        // Ánh xạ Dashboard
+        tvRemainingBudget = findViewById(R.id.tvRemainingBudget);
+        tvUtilizedPercent = findViewById(R.id.tvUtilizedPercent);
+        tvTotalSpent = findViewById(R.id.tvTotalSpent);
+        tvDashboardBudget = findViewById(R.id.tvDashboardBudget);
+        progressBudget = findViewById(R.id.progressBudget);
     }
 
     private void setupRecyclerView() {
@@ -105,14 +118,72 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
     private void loadExpenses() {
         List<Expense> expenses = expenseService.getExpensesByProjectId(currentProject.getId());
-        expenseAdapter.setExpenses(expenses);
 
-        if (expenses.isEmpty()) {
+        expenseAdapter.setExpenses(expenses);
+        expenseAdapter.notifyDataSetChanged();
+
+        double totalSpent = 0;
+        for (Expense e : expenses) {
+            String status = e.getStatus();
+            if (status != null && (status.equalsIgnoreCase("Paid") || status.equalsIgnoreCase("Pending") || status.equalsIgnoreCase("Reimbursed"))) {
+                totalSpent += e.getAmount();
+            }
+        }
+
+        // Gọi hàm cập nhật UI Dashboard
+        updateDashboard(totalSpent);
+
+        // BƯỚC 3: HIỂN THỊ DANH SÁCH HOẶC TEXT TRỐNG (Logic cũ của bạn)
+        if (expenses == null || expenses.isEmpty()) {
             tvEmptyExpense.setVisibility(View.VISIBLE);
             rvExpenses.setVisibility(View.GONE);
         } else {
             tvEmptyExpense.setVisibility(View.GONE);
             rvExpenses.setVisibility(View.VISIBLE);
+        }
+    }
+
+    // --- HÀM XỬ LÝ LOGIC HIỂN THỊ DASHBOARD ---
+    private void updateDashboard(double totalSpent) {
+        double budget = currentProject.getBudget();
+        double remaining = budget - totalSpent;
+
+        int utilization = 0;
+        if (budget > 0) {
+            utilization = (int) ((totalSpent / budget) * 100);
+        }
+
+        // Cập nhật text
+        tvRemainingBudget.setText(String.format("$%,.2f", remaining));
+        tvTotalSpent.setText(String.format("$%,.2f", totalSpent));
+        tvDashboardBudget.setText(String.format("$%,.2f", budget));
+        tvUtilizedPercent.setText(utilization + "%");
+
+        // Cập nhật thanh ProgressBar (Tối đa 100 để không bị vỡ giao diện)
+        progressBudget.setProgressCompat(Math.min(utilization, 100), true);
+
+        // Logic đổi màu cảnh báo
+        int colorGreen = android.graphics.Color.parseColor("#10B981");
+        int colorOrange = android.graphics.Color.parseColor("#F59E0B"); // Cảnh báo 80%
+        int colorRed = android.graphics.Color.parseColor("#EF4444");   // Báo động 100%
+        int colorPrimary = android.graphics.Color.parseColor("#0284C7");
+
+        if (utilization >= 100) {
+            progressBudget.setIndicatorColor(colorRed);
+            tvUtilizedPercent.setTextColor(colorRed);
+            if (remaining < 0) {
+                tvRemainingBudget.setTextColor(colorRed);
+            } else {
+                tvRemainingBudget.setTextColor(colorPrimary);
+            }
+        } else if (utilization >= 80) {
+            progressBudget.setIndicatorColor(colorOrange);
+            tvUtilizedPercent.setTextColor(colorOrange);
+            tvRemainingBudget.setTextColor(colorPrimary);
+        } else {
+            progressBudget.setIndicatorColor(colorGreen);
+            tvUtilizedPercent.setTextColor(colorGreen);
+            tvRemainingBudget.setTextColor(colorPrimary);
         }
     }
 
