@@ -35,7 +35,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
     private Project currentProject;
     private ProjectService projectService;
     private ExpenseService expenseService;
-    private UserService userService; // THÊM MỚI
+    private UserService userService;
     private ExpenseAdapter expenseAdapter;
 
     private RecyclerView rvExpenses;
@@ -53,7 +53,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
         projectService = new ProjectService(this);
         expenseService = new ExpenseService(this);
-        userService = new UserService(this); // KHỞI TẠO
+        userService = new UserService(this);
 
         MaterialToolbar toolbar = findViewById(R.id.toolbarDetail);
         setSupportActionBar(toolbar);
@@ -180,7 +180,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
         TextView tvDifficulty = findViewById(R.id.tvDetDifficulty);
         TextView tvClient = findViewById(R.id.tvDetClient);
         TextView tvSpecial = findViewById(R.id.tvDetSpecial);
-        TextView tvAssignedStaff = findViewById(R.id.tvDetAssignedStaff); // MỚI
+        TextView tvAssignedStaff = findViewById(R.id.tvDetAssignedStaff);
 
         tvName.setText(currentProject.getName());
         tvStatus.setText(currentProject.getStatus());
@@ -193,12 +193,10 @@ public class ProjectDetailActivity extends AppCompatActivity {
         tvClient.setText("Client: " + (currentProject.getClientInfo().isEmpty() ? "N/A" : currentProject.getClientInfo()));
         tvSpecial.setText("Notes: " + (currentProject.getSpecialRequirements().isEmpty() ? "N/A" : currentProject.getSpecialRequirements()));
 
-        // LOGIC LẤY TÊN STAFF TỪ SQLite
         String staffUid = currentProject.getAssignedTo();
         String staffDisplayName = "No staff assigned";
 
         if (staffUid != null && !staffUid.equals("unassigned")) {
-            // Chúng ta lặp danh sách local để tìm người khớp UID
             List<User> allStaff = userService.getAllStaffLocally();
             for (User u : allStaff) {
                 if (u.getUid().equals(staffUid)) {
@@ -214,6 +212,19 @@ public class ProjectDetailActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_project_detail, menu);
         return true;
+    }
+
+    // UPDATE: Bổ sung lại hàm onPrepareOptionsMenu để ẩn menu khi dự án đã Completed
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (currentProject != null && currentProject.getStatus().equalsIgnoreCase("Completed")) {
+            MenuItem itemEdit = menu.findItem(R.id.action_edit);
+            MenuItem itemDelete = menu.findItem(R.id.action_delete);
+
+            if (itemEdit != null) itemEdit.setVisible(false);
+            if (itemDelete != null) itemDelete.setVisible(false);
+        }
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override

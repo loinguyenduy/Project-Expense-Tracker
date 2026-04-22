@@ -17,7 +17,6 @@ public class UserService {
         dbHelper = new DatabaseHelper(context);
     }
 
-    // Chỉ lấy những User có role là "staff"
     public List<User> getAllStaffLocally() {
         List<User> staffList = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
@@ -39,7 +38,6 @@ public class UserService {
         return staffList;
     }
 
-    // Cập nhật trạng thái active/inactive dưới local SQLite
     public void updateStaffStatusLocally(String uid, boolean isActive) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();

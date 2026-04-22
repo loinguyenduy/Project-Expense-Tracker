@@ -9,13 +9,18 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.project_coursework_comp1786.R;
 import com.example.project_coursework_comp1786.models.Project;
+import com.example.project_coursework_comp1786.models.User;
 import com.example.project_coursework_comp1786.services.ProjectService;
+import com.example.project_coursework_comp1786.services.UserService;
 import com.google.android.material.button.MaterialButton;
+
+import java.util.List;
 
 public class ConfirmProjectActivity extends AppCompatActivity {
 
     private Project projectData;
     private ProjectService projectService;
+    private UserService userService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +28,7 @@ public class ConfirmProjectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_confirm_project);
 
         projectService = new ProjectService(this);
+        userService = new UserService(this);
 
         projectData = (Project) getIntent().getSerializableExtra("PROJECT_DATA");
 
@@ -61,6 +67,7 @@ public class ConfirmProjectActivity extends AppCompatActivity {
 
     private void displayData() {
         TextView tvCode = findViewById(R.id.tvCode);
+        TextView tvAssignedStaff = findViewById(R.id.tvAssignedStaff);
         TextView tvName = findViewById(R.id.tvName);
         TextView tvDesc = findViewById(R.id.tvDesc);
         TextView tvManager = findViewById(R.id.tvManager);
@@ -82,5 +89,19 @@ public class ConfirmProjectActivity extends AppCompatActivity {
 
         tvSpecialReq.setText("Requirements: " + (projectData.getSpecialRequirements().isEmpty() ? "N/A" : projectData.getSpecialRequirements()));
         tvClient.setText("Client/Dept: " + (projectData.getClientInfo().isEmpty() ? "N/A" : projectData.getClientInfo()));
+
+        String staffUid = projectData.getAssignedTo();
+        String staffDisplayName = "No staff assigned";
+
+        if (staffUid != null && !staffUid.equals("unassigned")) {
+            List<User> allStaff = userService.getAllStaffLocally();
+            for (User u : allStaff) {
+                if (u.getUid().equals(staffUid)) {
+                    staffDisplayName = u.getFullName();
+                    break;
+                }
+            }
+        }
+        tvAssignedStaff.setText("Assigned Staff: " + staffDisplayName);
     }
 }

@@ -46,7 +46,7 @@ public class FirebaseSyncService {
         FirebaseDatabase database = FirebaseDatabase.getInstance(FIREBASE_URL);
         DatabaseReference projectsRef = database.getReference("projects");
         DatabaseReference expensesRef = database.getReference("expenses");
-        DatabaseReference usersRef = database.getReference("users"); // CẬP NHẬT: Thêm reference users
+        DatabaseReference usersRef = database.getReference("users");
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // Push data of unsynced data from projects to cloud
@@ -124,7 +124,10 @@ public class FirebaseSyncService {
         projectsRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 for (DataSnapshot snap : task.getResult().getChildren()) {
-                    long id = snap.child("id").getValue(Long.class);
+
+                    // SỬA LỖI Ở ĐÂY: Dùng getLongSafe thay vì ép kiểu trực tiếp
+                    long id = getLongSafe(snap, "id");
+                    if (id == 0) continue;
 
                     Cursor checkCursor = db.rawQuery("SELECT isSynced FROM " + DatabaseHelper.TABLE_PROJECTS + " WHERE id = " + id, null);
                     boolean shouldSkip = false;
@@ -163,9 +166,10 @@ public class FirebaseSyncService {
         expensesRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 for (DataSnapshot snap : task.getResult().getChildren()) {
-                    Long idObj = snap.child("id").getValue(Long.class);
-                    if (idObj == null) continue;
-                    long id = idObj;
+
+                    // SỬA LỖI Ở ĐÂY: Dùng getLongSafe cho cả id và projectId
+                    long id = getLongSafe(snap, "id");
+                    if (id == 0) continue;
 
                     Cursor checkCursor = db.rawQuery("SELECT isSynced FROM " + DatabaseHelper.TABLE_EXPENSES + " WHERE id = " + id, null);
                     boolean shouldSkip = false;
@@ -180,7 +184,7 @@ public class FirebaseSyncService {
 
                     ContentValues values = new ContentValues();
                     values.put("id", id);
-                    values.put("projectId", snap.child("projectId").getValue(Long.class));
+                    values.put("projectId", getLongSafe(snap, "projectId")); // SỬA LỖI MẢNG NÀY NỮA
                     values.put("date", getStringSafe(snap, "date"));
                     values.put("amount", getDoubleSafe(snap, "amount"));
                     values.put("currency", getStringSafe(snap, "currency"));
@@ -200,7 +204,7 @@ public class FirebaseSyncService {
             }
         });
 
-        // CẬP NHẬT: Kéo danh sách Users từ Firebase về SQLite
+        // Kéo danh sách Users từ Firebase về SQLite
         usersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 for (DataSnapshot snap : task.getResult().getChildren()) {
@@ -213,7 +217,6 @@ public class FirebaseSyncService {
                     values.put("fullName", getStringSafe(snap, "fullName"));
                     values.put("role", getStringSafe(snap, "role"));
 
-                    // Xử lý isActive (mặc định là true nếu chưa có trường này)
                     boolean isActive = true;
                     if (snap.hasChild("isActive")) {
                         isActive = Boolean.TRUE.equals(snap.child("isActive").getValue(Boolean.class));
@@ -224,11 +227,12 @@ public class FirebaseSyncService {
                 }
                 Toast.makeText(context, "Sync Completed! Cloud & Local are up to date.", Toast.LENGTH_LONG).show();
             } else {
-                // Nếu load users lỗi hoặc trống thì vẫn báo thành công cho các mục trên
                 Toast.makeText(context, "Sync Completed for Projects & Expenses.", Toast.LENGTH_LONG).show();
             }
         });
     }
+
+    // --- CÁC HÀM TIỆN ÍCH AN TOÀN ---
 
     private String getStringSafe(DataSnapshot snap, String key) {
         if (snap.hasChild(key) && snap.child(key).getValue() != null) {
@@ -246,5 +250,24 @@ public class FirebaseSyncService {
             }
         }
         return 0.0;
+    }
+
+    // THÊM MỚI: Hàm ép kiểu an toàn cho ID (Xử lý cả số Long của Android và chuỗi String của React Native)
+    private long getLongSafe(DataSnapshot snap, String key) {
+        if (snap.hasChild(key) && snap.child(key).getValue() != null) {
+            Object value = snap.child(key).getValue();
+            if (value instanceof Long) {
+                return (Long) value;
+            } else if (value instanceof Integer) {
+                return ((Integer) value).longValue();
+            } else if (value instanceof String) {
+                try {
+                    return Long.parseLong((String) value);
+                } catch (NumberFormatException e) {
+                    return 0L;
+                }
+            }
+        }
+        return 0L;
     }
 }

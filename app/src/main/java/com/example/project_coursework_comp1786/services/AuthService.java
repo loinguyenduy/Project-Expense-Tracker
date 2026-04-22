@@ -17,22 +17,18 @@ public class AuthService {
         usersRef = FirebaseDatabase.getInstance().getReference("users");
     }
 
-    // Task đăng nhập
     public Task<AuthResult> loginUser(String email, String password) {
         return mAuth.signInWithEmailAndPassword(email, password);
     }
 
-    // Task tạo tài khoản trên Auth
     public Task<AuthResult> registerUserAuth(String email, String password) {
         return mAuth.createUserWithEmailAndPassword(email, password);
     }
 
-    // Task lưu thông tin vào Realtime Database
     public Task<Void> saveUserToDatabase(String uid, User user) {
         return usersRef.child(uid).setValue(user);
     }
 
-    // Task lấy thông tin Role từ Database
     public Task<DataSnapshot> getUserProfile(String uid) {
         return usersRef.child(uid).get();
     }

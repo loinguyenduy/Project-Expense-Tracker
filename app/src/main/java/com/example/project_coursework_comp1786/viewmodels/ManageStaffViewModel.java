@@ -32,17 +32,14 @@ public class ManageStaffViewModel extends AndroidViewModel {
     }
 
     public void loadLocalStaff(StaffLoadListener listener) {
-        // Đọc từ SQLite cho nhanh
         List<User> list = userService.getAllStaffLocally();
         listener.onLoaded(list);
     }
 
     public void toggleStaffStatus(User user, boolean isChecked, StatusToggleListener listener) {
-        // Cập nhật Firebase trước
         usersRef.child(user.getUid()).child("isActive").setValue(isChecked)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // Firebase OK -> Cập nhật SQLite
                         userService.updateStaffStatusLocally(user.getUid(), isChecked);
                         listener.onSuccess();
                     } else {

@@ -47,7 +47,6 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         holder.tvName.setText(user.getFullName());
         holder.tvEmail.setText(user.getEmail());
 
-        // Hủy listener cũ để tránh lỗi gọi lặp khi cuộn RecyclerView
         holder.switchActive.setOnCheckedChangeListener(null);
         holder.switchActive.setChecked(user.isActive());
 

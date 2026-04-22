@@ -62,12 +62,10 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         }
 
         public void bind(Expense expense, OnExpenseClickListener listener) {
-            // Hiển thị Mô tả hoặc Loại chi phí
             String title = (expense.getDescription() != null && !expense.getDescription().isEmpty())
                     ? expense.getDescription() : expense.getType();
             tvTitle.setText(title);
 
-            // LOGIC MỚI: Hiển thị Ngày, Loại và NGƯỜI CHI (Claimant)
             String claimant = (expense.getClaimant() != null && !expense.getClaimant().isEmpty())
                     ? expense.getClaimant() : "Unknown";
             tvSubtitle.setText(expense.getDate() + " • " + expense.getType() + " • By: " + claimant);
@@ -76,7 +74,6 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
             tvStatus.setText(expense.getStatus().toUpperCase());
 
-            // Xử lý màu sắc status
             if (expense.getStatus().equalsIgnoreCase("Pending")) {
                 tvStatus.setTextColor(itemView.getContext().getColor(android.R.color.holo_orange_dark));
                 tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#FFF3E0"));
