@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center"
+    android:background="@color/md_theme_background">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Architect Ledger"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_primary"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Admin Workspace"
+        android:textSize="16sp"
+        android:textColor="#64748B"
+        android:layout_marginBottom="40dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:startIconDrawable="@android:drawable/ic_dialog_email"
+        app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edtLoginEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"
+            android:hint="Email Address" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+        app:passwordToggleEnabled="true"
+        app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edtLoginPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:hint="Password" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="LOGIN"
+        android:textSize="16sp"
+        android:backgroundTint="@color/md_theme_primary"
+        app:cornerRadius="30dp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Administrator? "
+            android:textColor="#64748B"/>
+        <TextView
+            android:id="@+id/tvRegisterLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Register here"
+            android:textStyle="bold"
+            android:textColor="@color/md_theme_primary"/>
+    </LinearLayout>
+</LinearLayout>

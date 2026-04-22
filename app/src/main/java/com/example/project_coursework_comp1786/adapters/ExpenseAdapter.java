@@ -62,24 +62,32 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         }
 
         public void bind(Expense expense, OnExpenseClickListener listener) {
-            String title = (expense.getDescription() != null && !expense.getDescription().isEmpty()) ? expense.getDescription() : expense.getType();
+            // Hiển thị Mô tả hoặc Loại chi phí
+            String title = (expense.getDescription() != null && !expense.getDescription().isEmpty())
+                    ? expense.getDescription() : expense.getType();
             tvTitle.setText(title);
 
-            tvSubtitle.setText(expense.getDate() + " • " + expense.getType());
+            // LOGIC MỚI: Hiển thị Ngày, Loại và NGƯỜI CHI (Claimant)
+            String claimant = (expense.getClaimant() != null && !expense.getClaimant().isEmpty())
+                    ? expense.getClaimant() : "Unknown";
+            tvSubtitle.setText(expense.getDate() + " • " + expense.getType() + " • By: " + claimant);
+
             tvAmount.setText(expense.getCurrency() + " " + String.format("%,.2f", expense.getAmount()));
 
             tvStatus.setText(expense.getStatus().toUpperCase());
+
+            // Xử lý màu sắc status
             if (expense.getStatus().equalsIgnoreCase("Pending")) {
                 tvStatus.setTextColor(itemView.getContext().getColor(android.R.color.holo_orange_dark));
-                tvStatus.setBackgroundColor(itemView.getContext().getColor(android.R.color.transparent));
+                tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#FFF3E0"));
             } else {
                 tvStatus.setTextColor(itemView.getContext().getColor(android.R.color.holo_green_dark));
+                tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"));
             }
 
             itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onExpenseClick(expense);
             });
-
         }
     }
 }

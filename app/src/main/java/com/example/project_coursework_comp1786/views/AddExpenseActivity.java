@@ -46,21 +46,21 @@ public class AddExpenseActivity extends AppCompatActivity {
     private ExpenseService expenseService;
     private AddExpenseViewModel viewModel;
 
-    // Khai báo biến Location
-    private FusedLocationProviderClient fusedLocationClient;
+    private FusedLocationProviderClient fusedLocationClient; //api from google
 
     private TextInputLayout layoutDate, layoutAmount, layoutCurrency, layoutType, layoutMethod, layoutClaimant, layoutStatus, layoutLocation;
     private TextInputEditText edtDate, edtAmount, edtClaimant, edtDesc, edtLocation;
     private AutoCompleteTextView actvCurrency, actvType, actvMethod, actvStatus;
     private MaterialButton btnSave;
+    private String projectStatus = "";
 
-    // Bộ xử lý xin quyền Location kiểu mới của Android
+    // get permission from user
     private final ActivityResultLauncher<String[]> locationPermissionRequest =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 Boolean fineLocationGranted = result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false);
                 Boolean coarseLocationGranted = result.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false);
                 if ((fineLocationGranted != null && fineLocationGranted) || (coarseLocationGranted != null && coarseLocationGranted)) {
-                    fetchLocation(); // Đã có quyền -> Lấy vị trí
+                    fetchLocation();
                 } else {
                     Toast.makeText(this, "Permission Denied! Cannot detect location.", Toast.LENGTH_SHORT).show();
                 }
@@ -80,15 +80,19 @@ public class AddExpenseActivity extends AppCompatActivity {
         currentProjectId = getIntent().getLongExtra("PROJECT_ID", -1);
         expenseToEdit = (Expense) getIntent().getSerializableExtra("EXPENSE_DATA_TO_EDIT");
 
+        projectStatus = getIntent().getStringExtra("PROJECT_STATUS");
+        if (projectStatus == null) projectStatus = "";
+
         if (currentProjectId == -1) {
             Toast.makeText(this, "Error: Unknown Project", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
+        //init service and view model
         expenseService = new ExpenseService(this);
         viewModel = new ViewModelProvider(this).get(AddExpenseViewModel.class);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this); //init gps
 
         initViews();
         setupDropdowns();
@@ -97,11 +101,43 @@ public class AddExpenseActivity extends AppCompatActivity {
             populateDataForEdit();
         }
 
+        checkAndLockUI();
+
         edtDate.setOnClickListener(v -> showDatePicker());
         btnSave.setOnClickListener(v -> saveExpenseData());
 
-        // Lắng nghe sự kiện bấm vào Icon Location
-        layoutLocation.setEndIconOnClickListener(v -> checkLocationPermissionAndFetch());
+        layoutLocation.setEndIconOnClickListener(v -> checkLocationPermissionAndFetch()); //click on location icon
+    }
+
+    private void checkAndLockUI() {
+        if (projectStatus.equalsIgnoreCase("Completed")) {
+            btnSave.setEnabled(false);
+            btnSave.setText("PROJECT COMPLETED - LOCKED");
+            btnSave.setBackgroundColor(android.graphics.Color.GRAY);
+            lockAllFields();
+            Toast.makeText(this, "Project is completed. All records are locked.", Toast.LENGTH_LONG).show();
+        }
+        else if (expenseToEdit != null) {
+            String status = expenseToEdit.getStatus();
+            if (status.equalsIgnoreCase("Paid") || status.equalsIgnoreCase("Reimbursed")) {
+                btnSave.setEnabled(false);
+                btnSave.setText("EXPENSE " + status.toUpperCase() + " - LOCKED");
+                lockAllFields();
+            }
+        }
+    }
+
+    private void lockAllFields() {
+        edtDate.setEnabled(false);
+        edtAmount.setEnabled(false);
+        actvCurrency.setEnabled(false);
+        actvType.setEnabled(false);
+        actvMethod.setEnabled(false);
+        edtClaimant.setEnabled(false);
+        actvStatus.setEnabled(false);
+        edtDesc.setEnabled(false);
+        edtLocation.setEnabled(false);
+        layoutLocation.setEndIconVisible(false);
     }
 
     private void initViews() {
@@ -112,7 +148,7 @@ public class AddExpenseActivity extends AppCompatActivity {
         layoutMethod = findViewById(R.id.layoutMethod);
         layoutClaimant = findViewById(R.id.layoutClaimant);
         layoutStatus = findViewById(R.id.layoutStatus);
-        layoutLocation = findViewById(R.id.layoutLocation); // Ánh xạ layout location
+        layoutLocation = findViewById(R.id.layoutLocation);
 
         edtDate = findViewById(R.id.edtDate);
         edtAmount = findViewById(R.id.edtAmount);
@@ -126,7 +162,7 @@ public class AddExpenseActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSaveExpense);
     }
 
-    // Kiểm tra quyền trước khi lấy GPS
+    //validate permission
     private void checkLocationPermissionAndFetch() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fetchLocation();
@@ -138,22 +174,19 @@ public class AddExpenseActivity extends AppCompatActivity {
         }
     }
 
-    // Hàm lấy tọa độ và dịch ra địa chỉ thực tế
     @SuppressLint("MissingPermission")
     private void fetchLocation() {
         Toast.makeText(this, "Detecting location...", Toast.LENGTH_SHORT).show();
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
             if (location != null) {
                 try {
-                    // Sử dụng Geocoder để chuyển tọa độ thành tên đường
                     Geocoder geocoder = new Geocoder(this, Locale.getDefault());
                     List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
 
                     if (addresses != null && !addresses.isEmpty()) {
                         String address = addresses.get(0).getAddressLine(0);
-                        edtLocation.setText(address); // Điền địa chỉ đẹp vào ô
+                        edtLocation.setText(address);
                     } else {
-                        // Nếu mạng yếu không dịch được, điền thẳng tọa độ
                         edtLocation.setText("Lat: " + location.getLatitude() + ", Lng: " + location.getLongitude());
                     }
                 } catch (IOException e) {
@@ -165,7 +198,6 @@ public class AddExpenseActivity extends AppCompatActivity {
         });
     }
 
-    // ... (Giữ nguyên các hàm setupDropdowns, populateDataForEdit, showDatePicker, saveExpenseData, onCreateOptionsMenu, onOptionsItemSelected, showDeleteConfirmDialog như cũ)
     private void setupDropdowns() {
         String[] currencies = {"USD", "EUR", "GBP", "VND", "CAD", "AUD", "JPY"};
         actvCurrency.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, currencies));
@@ -252,6 +284,21 @@ public class AddExpenseActivity extends AppCompatActivity {
             getMenuInflater().inflate(R.menu.menu_expense_edit, menu);
         }
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (expenseToEdit != null) {
+            String status = expenseToEdit.getStatus();
+            if (projectStatus.equalsIgnoreCase("Completed") ||
+                    status.equalsIgnoreCase("Paid") ||
+                    status.equalsIgnoreCase("Reimbursed")) {
+                if (menu.findItem(R.id.action_delete_expense) != null) {
+                    menu.findItem(R.id.action_delete_expense).setVisible(false);
+                }
+            }
+        }
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override

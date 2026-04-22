@@ -15,20 +15,25 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Project_Coursework_COMP1786">
+
         <activity
-            android:name=".views.MainActivity"
+            android:name=".views.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".views.RegisterActivity"/>
+
+        <activity android:name=".views.MainActivity" android:exported="false" />
+
         <activity android:name=".views.AddProjectActivity"/>
         <activity android:name=".views.ConfirmProjectActivity"/>
         <activity android:name=".views.ProjectDetailActivity" />
         <activity android:name=".views.AddExpenseActivity" />
+        <activity android:name=".views.ManageStaffActivity" />
 
     </application>
-
 </manifest>

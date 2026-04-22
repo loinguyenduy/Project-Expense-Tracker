@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,24 +19,37 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Map;
 
 public class AddProjectActivity extends AppCompatActivity {
 
-    private TextInputLayout layoutCode, layoutName, layoutDesc, layoutManager, layoutBudget, layoutStartDate, layoutEndDate, layoutStatus, layoutDifficulty;
+    private TextInputLayout layoutCode, layoutName, layoutDesc, layoutManager, layoutBudget, layoutStartDate, layoutEndDate, layoutStatus, layoutDifficulty, layoutAssignee;
     private TextInputEditText edtCode, edtName, edtDesc, edtManager, edtBudget, edtStartDate, edtEndDate, edtSpecialReq, edtClient;
-    private AutoCompleteTextView actvStatus, actvDifficulty;
+    private AutoCompleteTextView actvStatus, actvDifficulty, actvAssignee;
     private MaterialButton btnReview;
 
     private AddProjectViewModel viewModel;
     private Project projectToEdit = null;
 
+    // Firebase & Staff Assignment
+    private DatabaseReference usersRef;
+    private HashMap<String, String> staffMap = new HashMap<>(); // Map: FullName -> UID
+    private String selectedStaffUid = "unassigned";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_project);
+
+        // Khởi tạo Firebase
+        usersRef = FirebaseDatabase.getInstance().getReference("users");
 
         MaterialToolbar toolbar = findViewById(R.id.toolbarAdd);
         setSupportActionBar(toolbar);
@@ -48,6 +62,9 @@ public class AddProjectActivity extends AppCompatActivity {
         initViews();
         setupDropdowns();
         setupDatePickers();
+
+        // Gọi hàm lấy danh sách nhân viên từ Firebase
+        fetchStaffList();
 
         projectToEdit = (Project) getIntent().getSerializableExtra("PROJECT_DATA_TO_EDIT");
         if (projectToEdit != null) {
@@ -76,6 +93,7 @@ public class AddProjectActivity extends AppCompatActivity {
         layoutEndDate = findViewById(R.id.layoutEndDate);
         layoutStatus = findViewById(R.id.layoutStatus);
         layoutDifficulty = findViewById(R.id.layoutDifficulty);
+        layoutAssignee = findViewById(R.id.layoutAssignee);
 
         edtCode = findViewById(R.id.edtCode);
         edtName = findViewById(R.id.edtName);
@@ -88,7 +106,55 @@ public class AddProjectActivity extends AppCompatActivity {
         actvDifficulty = findViewById(R.id.actvDifficulty);
         edtSpecialReq = findViewById(R.id.edtSpecialReq);
         edtClient = findViewById(R.id.edtClient);
+        actvAssignee = findViewById(R.id.actvAssignee);
+
         btnReview = findViewById(R.id.btnReview);
+    }
+
+    private void fetchStaffList() {
+        usersRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult().exists()) {
+                ArrayList<String> staffNames = new ArrayList<>();
+                staffNames.add("Unassigned");
+                staffMap.put("Unassigned", "unassigned");
+
+                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                    String role = snapshot.child("role").getValue(String.class);
+                    // Chỉ lấy những người có role là staff
+                    if ("staff".equals(role)) {
+                        String uid = snapshot.getKey();
+                        String name = snapshot.child("fullName").getValue(String.class);
+                        if (name != null && uid != null) {
+                            staffNames.add(name);
+                            staffMap.put(name, uid);
+                        }
+                    }
+                }
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, staffNames);
+                actvAssignee.setAdapter(adapter);
+
+                // Nếu đang Edit, hiển thị tên nhân viên hiện tại dựa trên UID lưu trong Project
+                if (projectToEdit != null) {
+                    String currentUid = projectToEdit.getAssignedTo();
+                    if (currentUid != null && !currentUid.equals("unassigned")) {
+                        for (Map.Entry<String, String> entry : staffMap.entrySet()) {
+                            if (entry.getValue().equals(currentUid)) {
+                                actvAssignee.setText(entry.getKey(), false);
+                                selectedStaffUid = currentUid;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Xử lý khi Admin chọn nhân viên từ Dropdown
+        actvAssignee.setOnItemClickListener((parent, view, position, id) -> {
+            String selectedName = (String) parent.getItemAtPosition(position);
+            selectedStaffUid = staffMap.get(selectedName);
+        });
     }
 
     private void setupDropdowns() {
@@ -126,6 +192,8 @@ public class AddProjectActivity extends AppCompatActivity {
         actvDifficulty.setText(projectToEdit.getJobDifficulty(), false);
         edtSpecialReq.setText(projectToEdit.getSpecialRequirements());
         edtClient.setText(projectToEdit.getClientInfo());
+
+        // selectedStaffUid đã được xử lý bên trong fetchStaffList() để đợi dữ liệu Firebase về
     }
 
     private void reviewDataBeforeSave() {
@@ -158,7 +226,8 @@ public class AddProjectActivity extends AppCompatActivity {
             String specialReq = edtSpecialReq.getText().toString().trim();
             String client = edtClient.getText().toString().trim();
 
-            Project projectToReview = new Project(code, name, desc, startDate, endDate, manager, status, budget, specialReq, client, difficulty, 0);
+            // Sử dụng selectedStaffUid từ Dropdown
+            Project projectToReview = new Project(code, name, desc, startDate, endDate, manager, status, budget, specialReq, client, difficulty, selectedStaffUid, 0);
 
             if (projectToEdit != null) {
                 projectToReview.setId(projectToEdit.getId());

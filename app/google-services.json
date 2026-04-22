@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "100705275339",
+    "firebase_url": "https://manage-expense-comp1786-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "manage-expense-comp1786",
     "storage_bucket": "manage-expense-comp1786.firebasestorage.app"
   },

@@ -17,12 +17,14 @@ import java.util.List;
 public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectViewHolder> {
 
     private List<Project> projectList;
-    private OnItemClickListener listener;
+    private OnItemClickListener listener;     //handle click from activity
 
+    //
     public interface OnItemClickListener {
         void onItemClick(Project project);
     }
 
+    //this constructor is used to pass data to adapter
     public ProjectAdapter(List<Project> projectList, OnItemClickListener listener) {
         this.projectList = projectList;
         this.listener = listener;
@@ -30,12 +32,14 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
 
     @NonNull
     @Override
+    //create view holder for each item in list
     public ProjectViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_project, parent, false);
         return new ProjectViewHolder(view);
     }
 
     @Override
+    //bind data to view holder
     public void onBindViewHolder(@NonNull ProjectViewHolder holder, int position) {
         Project currentProject = projectList.get(position);
         holder.bind(currentProject, listener);
@@ -51,6 +55,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         notifyDataSetChanged();
     }
 
+    //view holder class for each item in list
     static class ProjectViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvCodeManager, tvStatus, tvBudget;
         ImageView imgSyncStatus;
@@ -64,6 +69,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
             imgSyncStatus = itemView.findViewById(R.id.imgSyncStatus);
         }
 
+        //display data to UI
         public void bind(final Project project, final OnItemClickListener listener) {
             tvName.setText(project.getName());
 

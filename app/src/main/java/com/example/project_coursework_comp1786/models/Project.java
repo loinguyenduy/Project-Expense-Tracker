@@ -17,10 +17,12 @@ public class Project implements Serializable {
     private String specialRequirements;
     private String clientInfo;
     private String jobDifficulty;
+    private String assignedTo;
+
 
     public Project(long id, String projectCode, String name, String description, String startDate,
                    String endDate, String manager, String status, double budget, String specialRequirements,
-                   String clientInfo, String jobDifficulty, int isSynced){
+                   String clientInfo, String jobDifficulty, String assignedTo, int isSynced){
         this.id = id;
         this.projectCode = projectCode;
         this.name = name;
@@ -33,13 +35,14 @@ public class Project implements Serializable {
         this.specialRequirements = specialRequirements;
         this.clientInfo = clientInfo;
         this.jobDifficulty = jobDifficulty;
+        this.assignedTo = assignedTo;
         this.isSynced = isSynced;
     }
 
 
     public Project(String projectCode, String name, String description, String startDate,
                    String endDate, String manager, String status, double budget,
-                   String specialRequirements, String clientInfo, String jobDifficulty, int isSynced) {
+                   String specialRequirements, String clientInfo, String jobDifficulty, String assignedTo, int isSynced) {
         this.projectCode = projectCode;
         this.name = name;
         this.description = description;
@@ -51,6 +54,7 @@ public class Project implements Serializable {
         this.specialRequirements = specialRequirements;
         this.clientInfo = clientInfo;
         this.jobDifficulty = jobDifficulty;
+        this.assignedTo = assignedTo;
         this.isSynced = isSynced;
     }
 
@@ -91,4 +95,7 @@ public class Project implements Serializable {
 
     public String getJobDifficulty() { return jobDifficulty; }
     public void setJobDifficulty(String jobDifficulty) { this.jobDifficulty = jobDifficulty; }
+
+    public String getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(String assignedTo) { this.assignedTo = assignedTo; }
 }

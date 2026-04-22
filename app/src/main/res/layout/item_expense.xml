@@ -18,7 +18,6 @@
             android:id="@+id/tvExpTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Materials"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"/>
@@ -27,7 +26,6 @@
             android:id="@+id/tvExpSubtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Oct 24, 2023 • Claimant: John"
             android:textSize="12sp"
             android:textColor="#757575"
             android:layout_marginTop="4dp"/>
@@ -43,7 +41,6 @@
             android:id="@+id/tvExpAmount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="$12,450.00"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/md_theme_primary"/>
@@ -52,11 +49,8 @@
             android:id="@+id/tvExpStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PAID"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:textColor="#00C853"
-            android:background="#E8F5E9"
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
             android:layout_marginTop="4dp"/>

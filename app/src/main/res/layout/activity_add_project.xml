@@ -182,6 +182,23 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutAssignee"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:startIconDrawable="@android:drawable/ic_menu_myplaces"
+                app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
+                <AutoCompleteTextView
+                    android:id="@+id/actvAssignee"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:hint="Assign To Staff (Optional)"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutSpecialReq"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"

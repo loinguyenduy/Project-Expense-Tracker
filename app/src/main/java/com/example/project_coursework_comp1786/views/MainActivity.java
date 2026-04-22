@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,10 +23,12 @@ import com.example.project_coursework_comp1786.adapters.ProjectAdapter;
 import com.example.project_coursework_comp1786.models.Project;
 import com.example.project_coursework_comp1786.services.FirebaseSyncService;
 import com.example.project_coursework_comp1786.services.ProjectService;
+import com.example.project_coursework_comp1786.utils.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -46,10 +49,17 @@ public class MainActivity extends AppCompatActivity {
     private String filterEnd = "";
     private String filterStatus = "All";
     private String filterManager = "";
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sessionManager = new SessionManager(this);
+        if (!sessionManager.isLoggedIn()) {
+            sessionManager.logoutUser();
+            finish();
+            return;
+        }
         setContentView(R.layout.activity_main);
 
         projectService = new ProjectService(this);
@@ -90,9 +100,18 @@ public class MainActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.nav_projects) {
                 return true;
+            } else if (id == R.id.nav_staff) {
+                startActivity(new Intent(MainActivity.this, ManageStaffActivity.class));
+                return true;
             } else if (id == R.id.nav_settings) {
                 FirebaseSyncService syncService = new FirebaseSyncService(MainActivity.this);
                 syncService.syncUnsyncedData();
+                return true;
+            } else if (id == R.id.nav_logout) {
+                // XỬ LÝ LOGOUT
+                FirebaseAuth.getInstance().signOut();
+                sessionManager.logoutUser();
+                finish();
                 return true;
             }
             return false;

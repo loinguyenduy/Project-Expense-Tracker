@@ -46,11 +46,10 @@ public class FirebaseSyncService {
         FirebaseDatabase database = FirebaseDatabase.getInstance(FIREBASE_URL);
         DatabaseReference projectsRef = database.getReference("projects");
         DatabaseReference expensesRef = database.getReference("expenses");
+        DatabaseReference usersRef = database.getReference("users"); // CẬP NHẬT: Thêm reference users
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-        // ==========================================
-        // PHẦN 1: SYNC UP (ĐẨY DỮ LIỆU TỪ SQLITE LÊN CLOUD)
-        // ==========================================
+        // Push data of unsynced data from projects to cloud
         Cursor pCursor = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_PROJECTS + " WHERE isSynced = 0", null);
         if (pCursor.moveToFirst()) {
             do {
@@ -59,8 +58,10 @@ public class FirebaseSyncService {
                         id, pCursor.getString(1), pCursor.getString(2),
                         pCursor.getString(3), pCursor.getString(4), pCursor.getString(5),
                         pCursor.getString(6), pCursor.getString(7), pCursor.getDouble(8),
-                        pCursor.getString(9), pCursor.getString(10), pCursor.getString(11), 1
+                        pCursor.getString(9), pCursor.getString(10), pCursor.getString(11),
+                        pCursor.getString(12), 1
                 );
+
                 projectsRef.child(String.valueOf(id)).setValue(p).addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         db.execSQL("UPDATE " + DatabaseHelper.TABLE_PROJECTS + " SET isSynced = 1 WHERE id = " + id);
@@ -70,6 +71,7 @@ public class FirebaseSyncService {
         }
         pCursor.close();
 
+        // Push data of unsynced data from expenses to cloud
         Cursor eCursor = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_EXPENSES + " WHERE isSynced = 0", null);
         if (eCursor.moveToFirst()) {
             do {
@@ -89,12 +91,55 @@ public class FirebaseSyncService {
         }
         eCursor.close();
 
-        // 2.1 Kéo Projects
+        // Delete data of synced data from projects in cloud
+        Cursor pDelCursor = db.rawQuery("SELECT id FROM " + DatabaseHelper.TABLE_PROJECTS + " WHERE isSynced = -1", null);
+        if (pDelCursor.moveToFirst()) {
+            do {
+                long id = pDelCursor.getLong(0);
+                projectsRef.child(String.valueOf(id)).removeValue().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        db.delete(DatabaseHelper.TABLE_PROJECTS, "id=?", new String[]{String.valueOf(id)});
+                    }
+                });
+            } while (pDelCursor.moveToNext());
+        }
+        pDelCursor.close();
+
+        // Delete data of synced data from expenses in cloud
+        Cursor eDelCursor = db.rawQuery("SELECT id FROM " + DatabaseHelper.TABLE_EXPENSES + " WHERE isSynced = -1", null);
+        if (eDelCursor.moveToFirst()) {
+            do {
+                long id = eDelCursor.getLong(0);
+                expensesRef.child(String.valueOf(id)).removeValue().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        db.delete(DatabaseHelper.TABLE_EXPENSES, "id=?", new String[]{String.valueOf(id)});
+                    }
+                });
+            } while (eDelCursor.moveToNext());
+        }
+        eDelCursor.close();
+
+
+        // Pull data from cloud and update local database of projects
         projectsRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 for (DataSnapshot snap : task.getResult().getChildren()) {
+                    long id = snap.child("id").getValue(Long.class);
+
+                    Cursor checkCursor = db.rawQuery("SELECT isSynced FROM " + DatabaseHelper.TABLE_PROJECTS + " WHERE id = " + id, null);
+                    boolean shouldSkip = false;
+                    if (checkCursor.moveToFirst()) {
+                        int localStatus = checkCursor.getInt(0);
+                        if (localStatus == 0 || localStatus == -1) {
+                            shouldSkip = true;
+                        }
+                    }
+                    checkCursor.close();
+
+                    if (shouldSkip) continue;
+
                     ContentValues values = new ContentValues();
-                    values.put("id", snap.child("id").getValue(Long.class));
+                    values.put("id", id);
                     values.put("projectCode", getStringSafe(snap, "projectCode"));
                     values.put("name", getStringSafe(snap, "name"));
                     values.put("description", getStringSafe(snap, "description"));
@@ -106,20 +151,35 @@ public class FirebaseSyncService {
                     values.put("specialRequirements", getStringSafe(snap, "specialRequirements"));
                     values.put("clientInfo", getStringSafe(snap, "clientInfo"));
                     values.put("jobDifficulty", getStringSafe(snap, "jobDifficulty"));
-                    values.put("isSynced", 1); // Đánh dấu đã đồng bộ
+                    values.put("assignedTo", getStringSafe(snap, "assignedTo"));
+                    values.put("isSynced", 1);
 
-                    // Lệnh CONFLICT_REPLACE: Tự động Thêm mới nếu chưa có, hoặc Cập nhật nếu đã có
                     db.insertWithOnConflict(DatabaseHelper.TABLE_PROJECTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 }
             }
         });
 
-        // 2.2 Kéo Expenses
+        // Pull data from cloud and update local database of expenses
         expensesRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 for (DataSnapshot snap : task.getResult().getChildren()) {
+                    Long idObj = snap.child("id").getValue(Long.class);
+                    if (idObj == null) continue;
+                    long id = idObj;
+
+                    Cursor checkCursor = db.rawQuery("SELECT isSynced FROM " + DatabaseHelper.TABLE_EXPENSES + " WHERE id = " + id, null);
+                    boolean shouldSkip = false;
+                    if (checkCursor.moveToFirst()) {
+                        int localStatus = checkCursor.getInt(0);
+                        if (localStatus == 0 || localStatus == -1) {
+                            shouldSkip = true;
+                        }
+                    }
+                    checkCursor.close();
+                    if (shouldSkip) continue;
+
                     ContentValues values = new ContentValues();
-                    values.put("id", snap.child("id").getValue(Long.class));
+                    values.put("id", id);
                     values.put("projectId", snap.child("projectId").getValue(Long.class));
                     values.put("date", getStringSafe(snap, "date"));
                     values.put("amount", getDoubleSafe(snap, "amount"));
@@ -128,7 +188,6 @@ public class FirebaseSyncService {
                     values.put("paymentMethod", getStringSafe(snap, "paymentMethod"));
                     values.put("claimant", getStringSafe(snap, "claimant"));
 
-                    // Xử lý thông minh: Nhận diện cả 'paymentStatus' (từ React Native) và 'status' (từ Android)
                     String status = snap.hasChild("paymentStatus") ? getStringSafe(snap, "paymentStatus") : getStringSafe(snap, "status");
                     values.put("status", status);
 
@@ -138,13 +197,39 @@ public class FirebaseSyncService {
 
                     db.insertWithOnConflict(DatabaseHelper.TABLE_EXPENSES, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 }
-                // Kết thúc quá trình Sync
+            }
+        });
+
+        // CẬP NHẬT: Kéo danh sách Users từ Firebase về SQLite
+        usersRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult().exists()) {
+                for (DataSnapshot snap : task.getResult().getChildren()) {
+                    String uid = snap.getKey();
+                    if (uid == null) continue;
+
+                    ContentValues values = new ContentValues();
+                    values.put("uid", uid);
+                    values.put("email", getStringSafe(snap, "email"));
+                    values.put("fullName", getStringSafe(snap, "fullName"));
+                    values.put("role", getStringSafe(snap, "role"));
+
+                    // Xử lý isActive (mặc định là true nếu chưa có trường này)
+                    boolean isActive = true;
+                    if (snap.hasChild("isActive")) {
+                        isActive = Boolean.TRUE.equals(snap.child("isActive").getValue(Boolean.class));
+                    }
+                    values.put("isActive", isActive ? 1 : 0);
+
+                    db.insertWithOnConflict(DatabaseHelper.TABLE_USERS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                }
                 Toast.makeText(context, "Sync Completed! Cloud & Local are up to date.", Toast.LENGTH_LONG).show();
+            } else {
+                // Nếu load users lỗi hoặc trống thì vẫn báo thành công cho các mục trên
+                Toast.makeText(context, "Sync Completed for Projects & Expenses.", Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    // Các hàm Helper để tránh lỗi NullPointerException khi Cloud thiếu trường dữ liệu
     private String getStringSafe(DataSnapshot snap, String key) {
         if (snap.hasChild(key) && snap.child(key).getValue() != null) {
             return String.valueOf(snap.child(key).getValue());

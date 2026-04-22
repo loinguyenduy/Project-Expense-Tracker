@@ -20,8 +20,9 @@ public class ExpenseService {
     public List<Expense> getExpensesByProjectId(long projectId) {
         List<Expense> expenseList = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        Cursor cursor = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_EXPENSES + " WHERE projectId = ? ORDER BY date DESC", new String[]{String.valueOf(projectId)});
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + DatabaseHelper.TABLE_EXPENSES + " WHERE projectId = ? AND isSynced != -1 ORDER BY date DESC",
+                new String[]{String.valueOf(projectId)});
 
         if (cursor.moveToFirst()) {
             do {
@@ -44,7 +45,6 @@ public class ExpenseService {
         cursor.close();
         return expenseList;
     }
-
     public long insertExpense(Expense expense) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -83,10 +83,12 @@ public class ExpenseService {
         int rows = db.update(DatabaseHelper.TABLE_EXPENSES, values, "id=?", new String[]{String.valueOf(expense.getId())});
         return rows > 0;
     }
-
     public boolean deleteExpense(long expenseId) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        int rows = db.delete(DatabaseHelper.TABLE_EXPENSES, "id=?", new String[]{String.valueOf(expenseId)});
+        ContentValues values = new ContentValues();
+        values.put("isSynced", -1);
+
+        int rows = db.update(DatabaseHelper.TABLE_EXPENSES, values, "id=?", new String[]{String.valueOf(expenseId)});
         return rows > 0;
     }
 }
